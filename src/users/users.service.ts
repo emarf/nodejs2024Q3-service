@@ -39,7 +39,6 @@ export class UsersService {
     return this.sanitizeUser(user);
   }
 
-
   update(id: string, updateUserDto: UpdateUserDto) {
     const index = this.users.findIndex((user) => user.id === id);
     if (index === -1) {
@@ -48,7 +47,10 @@ export class UsersService {
 
     const user = this.users[index];
     if (user.password !== updateUserDto.oldPassword) {
-      throw new HttpException('Old password is incorrect', HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        'Old password is incorrect',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const updatedUser = {
