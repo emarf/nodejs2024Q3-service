@@ -1,11 +1,26 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import { Artist } from 'src/artists/interfaces/artists.interface';
 import { v4 as uuid } from 'uuid';
+import { TracksService } from 'src/tracks/tracks.service';
+import { AlbumsService } from 'src/albums/albums.service';
 
 @Injectable()
 export class ArtistsService {
+  constructor(
+    @Inject(forwardRef(() => TracksService))
+    private readonly tracksService: TracksService,
+    @Inject(forwardRef(() => AlbumsService))
+    private readonly albumsService: AlbumsService,
+  ) {}
+
   private readonly artists: Artist[] = [];
 
   create(createArtistDto: CreateArtistDto) {
@@ -56,6 +71,11 @@ export class ArtistsService {
     if (index === -1) {
       throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
     }
+
+    const artist = this.artists[index];
+
+    this.tracksService.clearArtistIds(artist.id);
+    this.albumsService.clearArtistIds(artist.id);
 
     this.artists.splice(index, 1);
   }

@@ -1,14 +1,26 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { Album } from 'src/albums/interfaces/album.interface';
 import { ArtistsService } from 'src/artists/artists.service';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album.dto';
 import { v4 as uuid } from 'uuid';
+import { TracksService } from 'src/tracks/tracks.service';
 
 @Injectable()
 export class AlbumsService {
-  constructor(private artistsService: ArtistsService) {}
-  private readonly albums: Album[] = [];
+  constructor(
+    @Inject(forwardRef(() => TracksService))
+    private readonly tracksService: TracksService,
+    @Inject(forwardRef(() => ArtistsService))
+    private readonly artistsService: ArtistsService,
+  ) {}
+  private albums: Album[] = [];
 
   create({ name, year, artistId }: CreateAlbumDto) {
     if (artistId) {
@@ -22,7 +34,7 @@ export class AlbumsService {
       id: uuid(),
       name,
       year,
-      artistId: null,
+      artistId,
     };
     this.albums.push(album);
 
@@ -69,11 +81,24 @@ export class AlbumsService {
     return updatedAlbum;
   }
 
+  clearArtistIds(artistId: string) {
+    this.albums = this.albums.map((album) => {
+      if (album.artistId === artistId) {
+        return { ...album, artistId: null };
+      }
+      return album;
+    });
+  }
+
   remove(id: string) {
     const index = this.albums.findIndex((album) => album.id === id);
+
     if (index === -1) {
       throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
     }
+
+    const album = this.albums[index];
+    this.tracksService.clearAlbumIds(album.id);
 
     this.albums.splice(index, 1);
   }
