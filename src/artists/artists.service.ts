@@ -13,6 +13,7 @@ import { FavoritesService } from './../favorites/favorites.service';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import { DatabaseService } from 'src/database/database.service';
+import { DB_Field } from 'src/types';
 
 @Injectable()
 export class ArtistsService {
@@ -33,7 +34,7 @@ export class ArtistsService {
     };
 
     try {
-      await this.databaseService.create<Artist>('artists', artist);
+      await this.databaseService.create<Artist>(DB_Field.ARTISTS, artist);
       return artist;
     } catch {
       throw new HttpException(
@@ -45,7 +46,7 @@ export class ArtistsService {
 
   async findAll() {
     try {
-      return await this.databaseService.getAll<Artist>('artists');
+      return await this.databaseService.getAll<Artist>(DB_Field.ARTISTS);
     } catch {
       throw new HttpException(
         'Failed to get all artists',
@@ -56,7 +57,10 @@ export class ArtistsService {
 
   async findOne(id: string) {
     try {
-      const artist = await this.databaseService.getOne<Artist>('artists', id);
+      const artist = await this.databaseService.getOne<Artist>(
+        DB_Field.ARTISTS,
+        id,
+      );
       if (!artist) {
         throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
       }
@@ -73,7 +77,10 @@ export class ArtistsService {
 
   async update(id: string, updateArtistDto: UpdateArtistDto) {
     try {
-      const artist = await this.databaseService.getOne<Artist>('artists', id);
+      const artist = await this.databaseService.getOne<Artist>(
+        DB_Field.ARTISTS,
+        id,
+      );
 
       if (!artist) {
         throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
@@ -84,7 +91,11 @@ export class ArtistsService {
         ...updateArtistDto,
       };
 
-      await this.databaseService.update<Artist>('artists', id, updatedArtist);
+      await this.databaseService.update<Artist>(
+        DB_Field.ARTISTS,
+        id,
+        updatedArtist,
+      );
       return updatedArtist;
     } catch (error) {
       if (error instanceof HttpException) throw error;
@@ -97,7 +108,10 @@ export class ArtistsService {
 
   async remove(id: string) {
     try {
-      const artist = await this.databaseService.getOne<Artist>('artists', id);
+      const artist = await this.databaseService.getOne<Artist>(
+        DB_Field.ARTISTS,
+        id,
+      );
 
       if (!artist) {
         throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
@@ -107,7 +121,7 @@ export class ArtistsService {
       await this.albumsService.removeArtistFromAlbum(id);
       await this.favoritesService.removeArtist(id);
 
-      await this.databaseService.delete('artists', id);
+      await this.databaseService.delete(DB_Field.ARTISTS, id);
     } catch (error) {
       if (error instanceof HttpException) throw error;
 

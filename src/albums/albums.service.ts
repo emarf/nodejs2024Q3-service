@@ -12,6 +12,7 @@ import { TracksService } from 'src/tracks/tracks.service';
 import { v4 as uuid } from 'uuid';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album.dto';
+import { DB_Field } from 'src/types';
 
 @Injectable()
 export class AlbumsService {
@@ -26,7 +27,10 @@ export class AlbumsService {
   async create({ name, year, artistId }: CreateAlbumDto) {
     try {
       if (artistId) {
-        const artist = await this.databaseService.getOne('artists', artistId);
+        const artist = await this.databaseService.getOne(
+          DB_Field.ARTISTS,
+          artistId,
+        );
 
         if (!artist) {
           throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
@@ -40,7 +44,7 @@ export class AlbumsService {
         artistId,
       };
 
-      return await this.databaseService.create<Album>('albums', album);
+      return await this.databaseService.create<Album>(DB_Field.ALBUMS, album);
     } catch (error) {
       if (error instanceof HttpException) throw error;
       throw new HttpException(
@@ -52,7 +56,7 @@ export class AlbumsService {
 
   async findAll() {
     try {
-      return await this.databaseService.getAll<Album>('albums');
+      return await this.databaseService.getAll<Album>(DB_Field.ALBUMS);
     } catch {
       throw new HttpException(
         'Failed to get all artists',
@@ -63,7 +67,10 @@ export class AlbumsService {
 
   async findOne(id: string) {
     try {
-      const album = await this.databaseService.getOne<Album>('albums', id);
+      const album = await this.databaseService.getOne<Album>(
+        DB_Field.ALBUMS,
+        id,
+      );
 
       if (!album) {
         throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
@@ -81,21 +88,27 @@ export class AlbumsService {
 
   async update(id: string, { name, year, artistId }: UpdateAlbumDto) {
     try {
-      const album = await this.databaseService.getOne<Album>('albums', id);
+      const album = await this.databaseService.getOne<Album>(
+        DB_Field.ALBUMS,
+        id,
+      );
 
       if (!album) {
         throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
       }
 
       if (artistId) {
-        const artist = await this.databaseService.getOne('artists', artistId);
+        const artist = await this.databaseService.getOne(
+          DB_Field.ARTISTS,
+          artistId,
+        );
 
         if (!artist) {
           throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
         }
       }
 
-      return await this.databaseService.update<Album>('albums', id, {
+      return await this.databaseService.update<Album>(DB_Field.ALBUMS, id, {
         name,
         year,
         artistId,
@@ -111,7 +124,10 @@ export class AlbumsService {
 
   async remove(id: string) {
     try {
-      const album = await this.databaseService.getOne<Album>('albums', id);
+      const album = await this.databaseService.getOne<Album>(
+        DB_Field.ALBUMS,
+        id,
+      );
 
       if (!album) {
         throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
@@ -119,7 +135,7 @@ export class AlbumsService {
 
       await this.tracksService.removeAlbumFromTracks(id);
       await this.favoritesService.removeAlbum(id);
-      await this.databaseService.delete('albums', id);
+      await this.databaseService.delete(DB_Field.ALBUMS, id);
     } catch (error) {
       if (error instanceof HttpException) throw error;
       throw new HttpException(
@@ -130,11 +146,11 @@ export class AlbumsService {
   }
 
   async removeArtistFromAlbum(artistId: string) {
-    const albums = await this.databaseService.getAll<Album>('albums');
+    const albums = await this.databaseService.getAll<Album>(DB_Field.ALBUMS);
 
     for (const album of albums) {
       if (album.artistId === artistId) {
-        await this.databaseService.update<Album>('albums', album.id, {
+        await this.databaseService.update<Album>(DB_Field.ALBUMS, album.id, {
           artistId: null,
         });
       }

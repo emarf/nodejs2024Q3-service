@@ -8,6 +8,7 @@ import {
   FavoriteTrack,
 } from 'src/favorites/interfaces/favorite.interface';
 import { Track } from 'src/tracks/interfaces/track.interface';
+import { DB_Field } from 'src/types';
 
 @Injectable()
 export class FavoritesService {
@@ -16,24 +17,28 @@ export class FavoritesService {
   async findAll() {
     try {
       const trackIds = await this.databaseService.getAll<FavoriteTrack>(
-        'favoritesTracks',
+        DB_Field.FAVORITES_TRACKS,
       );
       const albumIds = await this.databaseService.getAll<FavoriteAlbum>(
-        'favoritesAlbums',
+        DB_Field.FAVORITES_ALBUMS,
       );
       const artistIds = await this.databaseService.getAll<FavoriteArtist>(
-        'favoritesArtists',
+        DB_Field.FAVORITES_ARTISTS,
       );
 
       const tracks = await Promise.all(
-        trackIds.map((id) => this.databaseService.getOne<Track>('tracks', id)),
+        trackIds.map((id) =>
+          this.databaseService.getOne<Track>(DB_Field.TRACKS, id),
+        ),
       );
       const albums = await Promise.all(
-        albumIds.map((id) => this.databaseService.getOne<Album>('albums', id)),
+        albumIds.map((id) =>
+          this.databaseService.getOne<Album>(DB_Field.ALBUMS, id),
+        ),
       );
       const artists = await Promise.all(
         artistIds.map((id) =>
-          this.databaseService.getOne<Artist>('artists', id),
+          this.databaseService.getOne<Artist>(DB_Field.ARTISTS, id),
         ),
       );
 
@@ -52,7 +57,10 @@ export class FavoritesService {
 
   async addTrack(trackId: string) {
     try {
-      const track = await this.databaseService.getOne<Track>('tracks', trackId);
+      const track = await this.databaseService.getOne<Track>(
+        DB_Field.TRACKS,
+        trackId,
+      );
 
       if (!track) {
         throw new HttpException(
@@ -62,7 +70,7 @@ export class FavoritesService {
       }
 
       await this.databaseService.create<FavoriteTrack>(
-        'favoritesTracks',
+        DB_Field.FAVORITES_TRACKS,
         trackId,
       );
     } catch (error) {
@@ -76,7 +84,10 @@ export class FavoritesService {
 
   async addAlbum(albumId: string) {
     try {
-      const album = await this.databaseService.getOne<Album>('albums', albumId);
+      const album = await this.databaseService.getOne<Album>(
+        DB_Field.ALBUMS,
+        albumId,
+      );
 
       if (!album) {
         throw new HttpException(
@@ -86,7 +97,7 @@ export class FavoritesService {
       }
 
       await this.databaseService.create<FavoriteAlbum>(
-        'favoritesAlbums',
+        DB_Field.FAVORITES_ALBUMS,
         albumId,
       );
     } catch (error) {
@@ -101,7 +112,7 @@ export class FavoritesService {
   async addArtist(artistId: string) {
     try {
       const artist = await this.databaseService.getOne<Artist>(
-        'artists',
+        DB_Field.ARTISTS,
         artistId,
       );
 
@@ -113,7 +124,7 @@ export class FavoritesService {
       }
 
       await this.databaseService.create<FavoriteArtist>(
-        'favoritesArtists',
+        DB_Field.FAVORITES_ARTISTS,
         artistId,
       );
     } catch (error) {
@@ -128,14 +139,17 @@ export class FavoritesService {
   async removeTrackFromFavorites(trackId: string) {
     try {
       const tracks = await this.databaseService.getAll<FavoriteTrack>(
-        'favoritesTracks',
+        DB_Field.FAVORITES_TRACKS,
       );
 
       if (!tracks.some((track) => track === trackId)) {
         throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
       }
 
-      await this.databaseService.deleteTest('favoritesTracks', trackId);
+      await this.databaseService.deleteFromFavorites(
+        DB_Field.FAVORITES_TRACKS,
+        trackId,
+      );
     } catch (error) {
       if (error instanceof HttpException) throw error;
       throw new HttpException(
@@ -148,14 +162,17 @@ export class FavoritesService {
   async removeAlbumFromFavorites(albumId: string) {
     try {
       const albums = await this.databaseService.getAll<FavoriteAlbum>(
-        'favoritesAlbums',
+        DB_Field.FAVORITES_ALBUMS,
       );
 
       if (!albums.some((album) => album === albumId)) {
         throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
       }
 
-      await this.databaseService.deleteTest('favoritesAlbums', albumId);
+      await this.databaseService.deleteFromFavorites(
+        DB_Field.FAVORITES_ALBUMS,
+        albumId,
+      );
     } catch (error) {
       if (error instanceof HttpException) throw error;
       throw new HttpException(
@@ -168,14 +185,17 @@ export class FavoritesService {
   async removeArtistFromFavorites(artistId: string) {
     try {
       const artists = await this.databaseService.getAll<FavoriteArtist>(
-        'favoritesArtists',
+        DB_Field.FAVORITES_ARTISTS,
       );
 
       if (!artists.some((artist) => artist === artistId)) {
         throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
       }
 
-      await this.databaseService.deleteTest('favoritesArtists', artistId);
+      await this.databaseService.deleteFromFavorites(
+        DB_Field.FAVORITES_ARTISTS,
+        artistId,
+      );
     } catch (error) {
       if (error instanceof HttpException) throw error;
       throw new HttpException(
@@ -186,14 +206,23 @@ export class FavoritesService {
   }
 
   async removeTrack(trackId: string) {
-    await this.databaseService.deleteTest('favoritesTracks', trackId);
+    await this.databaseService.deleteFromFavorites(
+      DB_Field.FAVORITES_TRACKS,
+      trackId,
+    );
   }
 
   async removeAlbum(albumId: string) {
-    await this.databaseService.deleteTest('favoritesAlbums', albumId);
+    await this.databaseService.deleteFromFavorites(
+      DB_Field.FAVORITES_ALBUMS,
+      albumId,
+    );
   }
 
   async removeArtist(artistId: string) {
-    await this.databaseService.deleteTest('favoritesArtists', artistId);
+    await this.databaseService.deleteFromFavorites(
+      DB_Field.FAVORITES_ARTISTS,
+      artistId,
+    );
   }
 }

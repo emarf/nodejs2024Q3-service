@@ -1,17 +1,9 @@
 import { Injectable } from '@nestjs/common';
-
-type Fields =
-  | 'artists'
-  | 'albums'
-  | 'tracks'
-  | 'users'
-  | 'favoritesTracks'
-  | 'favoritesAlbums'
-  | 'favoritesArtists';
+import { DB_Field } from 'src/types';
 
 @Injectable()
 export class DatabaseService {
-  private data: Record<Fields, any[]> = {
+  private data: Record<DB_Field, any[]> = {
     artists: [],
     albums: [],
     tracks: [],
@@ -21,11 +13,11 @@ export class DatabaseService {
     favoritesArtists: [],
   };
 
-  async getAll<T>(field: Fields): Promise<T[]> {
+  async getAll<T>(field: DB_Field): Promise<T[]> {
     return this.data[field] as T[];
   }
 
-  async getOne<T>(field: Fields, id: string): Promise<T> {
+  async getOne<T>(field: DB_Field, id: string): Promise<T> {
     const item = this.data[field].find((item) => item.id === id);
 
     if (!item) {
@@ -35,12 +27,12 @@ export class DatabaseService {
     return item as T;
   }
 
-  async create<T>(field: Fields, dto: T): Promise<T> {
+  async create<T>(field: DB_Field, dto: T): Promise<T> {
     this.data[field].push(dto);
     return dto;
   }
 
-  async update<T>(field: Fields, id: string, dto: Partial<T>): Promise<T> {
+  async update<T>(field: DB_Field, id: string, dto: Partial<T>): Promise<T> {
     const index = this.data[field].findIndex((item) => item.id === id);
 
     if (index === -1) {
@@ -51,7 +43,7 @@ export class DatabaseService {
     return this.data[field][index] as T;
   }
 
-  async delete(field: Fields, id: string): Promise<boolean> {
+  async delete(field: DB_Field, id: string): Promise<boolean> {
     const index = this.data[field].findIndex((item) => item.id === id);
 
     if (index === -1) {
@@ -62,7 +54,7 @@ export class DatabaseService {
     return true;
   }
 
-  async deleteTest(field: Fields, id: string): Promise<boolean> {
+  async deleteFromFavorites(field: DB_Field, id: string): Promise<boolean> {
     const index = this.data[field].findIndex((item) => item === id);
 
     if (index === -1) {

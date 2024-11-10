@@ -4,6 +4,7 @@ import { User } from 'src/users/interfaces/user.interface';
 import { v4 as uuid } from 'uuid';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { DB_Field } from 'src/types';
 
 @Injectable()
 export class UsersService {
@@ -24,7 +25,7 @@ export class UsersService {
     };
 
     try {
-      await this.databaseService.create<User>('users', user);
+      await this.databaseService.create<User>(DB_Field.USERS, user);
       return this.sanitizeUser(user);
     } catch {
       throw new HttpException(
@@ -36,7 +37,7 @@ export class UsersService {
 
   async findAll() {
     try {
-      return await this.databaseService.getAll<User>('users');
+      return await this.databaseService.getAll<User>(DB_Field.USERS);
     } catch (error) {
       throw new HttpException(
         'Failed to get all users',
@@ -47,7 +48,7 @@ export class UsersService {
 
   async findOne(id: string) {
     try {
-      const user = await this.databaseService.getOne<User>('users', id);
+      const user = await this.databaseService.getOne<User>(DB_Field.USERS, id);
 
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -66,7 +67,7 @@ export class UsersService {
 
   async update(id: string, updateUserDto: UpdateUserDto) {
     try {
-      const user = await this.databaseService.getOne<User>('users', id);
+      const user = await this.databaseService.getOne<User>(DB_Field.USERS, id);
 
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -86,7 +87,7 @@ export class UsersService {
         updatedAt: new Date().getTime(),
       };
 
-      await this.databaseService.update<User>('users', id, updatedUser);
+      await this.databaseService.update<User>(DB_Field.USERS, id, updatedUser);
       return this.sanitizeUser(updatedUser);
     } catch (error) {
       if (error instanceof HttpException) throw error;
@@ -100,13 +101,13 @@ export class UsersService {
 
   async remove(id: string) {
     try {
-      const user = await this.databaseService.getOne<User>('users', id);
+      const user = await this.databaseService.getOne<User>(DB_Field.USERS, id);
 
       if (!user) {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       }
 
-      await this.databaseService.delete('users', id);
+      await this.databaseService.delete(DB_Field.USERS, id);
     } catch (error) {
       if (error instanceof HttpException) throw error;
       throw new HttpException(
