@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { DatabaseService } from 'src/database/database.service';
 import { User } from 'src/users/interfaces/user.interface';
 import { v4 as uuid } from 'uuid';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -6,14 +7,14 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  private readonly users: User[] = [];
+  constructor(private readonly databaseService: DatabaseService) {}
 
   private sanitizeUser(user: User) {
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
 
-  create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto) {
     const user = {
       id: uuid(),
       ...createUserDto,
@@ -22,54 +23,96 @@ export class UsersService {
       updatedAt: new Date().getTime(),
     };
 
-    this.users.push(user);
-    return this.sanitizeUser(user);
-  }
-
-  findAll() {
-    return this.users.map((user) => this.sanitizeUser(user));
-  }
-
-  findOne(id: string) {
-    const user = this.users.find((user) => user.id === id);
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
-
-    return this.sanitizeUser(user);
-  }
-
-  update(id: string, updateUserDto: UpdateUserDto) {
-    const index = this.users.findIndex((user) => user.id === id);
-    if (index === -1) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
-
-    const user = this.users[index];
-    if (user.password !== updateUserDto.oldPassword) {
+    try {
+      await this.databaseService.create<User>('users', user);
+      return this.sanitizeUser(user);
+    } catch {
       throw new HttpException(
-        'Old password is incorrect',
-        HttpStatus.FORBIDDEN,
+        'Failed to create user',
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-
-    const updatedUser = {
-      ...user,
-      password: updateUserDto.newPassword,
-      version: user.version + 1,
-      updatedAt: new Date().getTime(),
-    };
-
-    this.users[index] = updatedUser;
-    return this.sanitizeUser(updatedUser);
   }
 
-  remove(id: string) {
-    const index = this.users.findIndex((user) => user.id === id);
-    if (index === -1) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+  async findAll() {
+    try {
+      return await this.databaseService.getAll<User>('users');
+    } catch (error) {
+      throw new HttpException(
+        'Failed to get all users',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
+  }
 
-    this.users.splice(index, 1);
+  async findOne(id: string) {
+    try {
+      const user = await this.databaseService.getOne<User>('users', id);
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      return this.sanitizeUser(user);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        'Failed to get user',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    try {
+      const user = await this.databaseService.getOne<User>('users', id);
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      if (user.password !== updateUserDto.oldPassword) {
+        throw new HttpException(
+          'Old password is incorrect',
+          HttpStatus.FORBIDDEN,
+        );
+      }
+
+      const updatedUser = {
+        ...user,
+        password: updateUserDto.newPassword,
+        version: user.version + 1,
+        updatedAt: new Date().getTime(),
+      };
+
+      await this.databaseService.update<User>('users', id, updatedUser);
+      return this.sanitizeUser(updatedUser);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+
+      throw new HttpException(
+        'Failed to update user',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async remove(id: string) {
+    try {
+      const user = await this.databaseService.getOne<User>('users', id);
+
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      await this.databaseService.delete('users', id);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to delete user',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

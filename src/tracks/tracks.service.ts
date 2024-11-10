@@ -5,95 +5,128 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
+import { DatabaseService } from 'src/database/database.service';
+import { FavoritesService } from 'src/favorites/favorites.service';
+import { Track } from 'src/tracks/interfaces/track.interface';
+import { v4 as uuid } from 'uuid';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
-import { Track } from 'src/tracks/interfaces/track.interface';
-import { ArtistsService } from 'src/artists/artists.service';
-import { AlbumsService } from 'src/albums/albums.service';
-import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class TracksService {
   constructor(
-    @Inject(forwardRef(() => ArtistsService))
-    private artistsService: ArtistsService,
-    @Inject(forwardRef(() => AlbumsService))
-    private albumsService: AlbumsService,
+    @Inject(forwardRef(() => FavoritesService))
+    private favoritesService: FavoritesService,
+    private databaseService: DatabaseService,
   ) {}
 
   private tracks: Track[] = [];
-  create({ name, artistId, albumId, duration }: CreateTrackDto) {
-    if (artistId) {
-      const artist = this.artistsService.findOne(artistId);
-      if (!artist) {
-        throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
+
+  async create({ name, artistId, albumId, duration }: CreateTrackDto) {
+    try {
+      if (artistId) {
+        const artist = await this.databaseService.getOne('artists', artistId);
+
+        if (!artist) {
+          throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
+        }
       }
-    }
 
-    if (albumId) {
-      const album = this.albumsService.findOne(albumId);
-      if (!album) {
-        throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+      if (albumId) {
+        const album = await this.databaseService.getOne('albums', albumId);
+
+        if (!album) {
+          throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+        }
       }
+
+      const track = {
+        id: uuid(),
+        name,
+        artistId,
+        albumId,
+        duration,
+      };
+
+      return await this.databaseService.create('tracks', track);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to create track',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-
-    const track = {
-      id: uuid(),
-      name,
-      artistId,
-      albumId,
-      duration,
-    };
-
-    this.tracks.push(track);
-    return track;
   }
 
-  findAll() {
-    return this.tracks;
+  async findAll() {
+    try {
+      return await this.databaseService.getAll('tracks');
+    } catch {
+      throw new HttpException(
+        'Failed to get tracks',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-  findOne(id: string) {
-    const track = this.tracks.find((track) => track.id === id);
+  async findOne(id: string) {
+    try {
+      const track = await this.databaseService.getOne('tracks', id);
 
-    if (!track) {
-      throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
+      if (!track) {
+        throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
+      }
+
+      return track;
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to get track',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-
-    return track;
   }
 
-  update(id: string, { name, artistId, albumId, duration }: UpdateTrackDto) {
-    if (artistId) {
-      const artist = this.artistsService.findOne(artistId);
-      if (!artist) {
-        throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
+  async update(
+    id: string,
+    { name, artistId, albumId, duration }: UpdateTrackDto,
+  ) {
+    try {
+      const track = await this.databaseService.getOne('tracks', id);
+
+      if (!track) {
+        throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
       }
-    }
 
-    if (albumId) {
-      const album = this.albumsService.findOne(albumId);
-      if (!album) {
-        throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+      if (artistId) {
+        const artist = await this.databaseService.getOne('artists', artistId);
+
+        if (!artist) {
+          throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
+        }
       }
+
+      if (albumId) {
+        const album = await this.databaseService.getOne('albums', albumId);
+
+        if (!album) {
+          throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+        }
+      }
+
+      return await this.databaseService.update('tracks', id, {
+        name,
+        artistId,
+        albumId,
+        duration,
+      });
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to update track',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-
-    const index = this.tracks.findIndex((track) => track.id === id);
-
-    if (index === -1) {
-      throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
-    }
-
-    const track = this.tracks[index];
-    this.tracks[index] = {
-      ...track,
-      name,
-      artistId,
-      albumId,
-      duration,
-    };
-
-    return this.tracks[index];
   }
 
   clearAlbumIds(albumId: string) {
@@ -114,12 +147,46 @@ export class TracksService {
     });
   }
 
-  remove(id: string) {
-    const index = this.tracks.findIndex((track) => track.id === id);
-    if (index === -1) {
-      throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
-    }
+  async remove(id: string) {
+    try {
+      const track = await this.databaseService.getOne('tracks', id);
 
-    this.tracks.splice(index, 1);
+      if (!track) {
+        throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
+      }
+
+      await this.favoritesService.removeTrack(id);
+      await this.databaseService.delete('tracks', id);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(
+        'Failed to delete track',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async removeArtistFromTracks(artistId: string) {
+    const tracks = await this.databaseService.getAll<Track>('tracks');
+
+    for (const track of tracks) {
+      if (track.artistId === artistId) {
+        await this.databaseService.update('tracks', track.id, {
+          artistId: null,
+        });
+      }
+    }
+  }
+
+  async removeAlbumFromTracks(albumId: string) {
+    const tracks = await this.databaseService.getAll<Track>('tracks');
+
+    for (const track of tracks) {
+      if (track.albumId === albumId) {
+        await this.databaseService.update('tracks', track.id, {
+          albumId: null,
+        });
+      }
+    }
   }
 }
