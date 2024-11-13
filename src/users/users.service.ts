@@ -1,119 +1,115 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { DatabaseService } from 'src/database/database.service';
+import {
+  ForbiddenException,
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { User } from 'src/users/interfaces/user.interface';
-import { v4 as uuid } from 'uuid';
+import { PrismaService } from './../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { DB_Field } from 'src/types';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private prismaService: PrismaService) {}
 
   private sanitizeUser(user: User) {
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    const { password, createdAt, updatedAt, ...rest } = user;
+
+    return {
+      ...rest,
+      createdAt: new Date(createdAt).getTime(),
+      updatedAt: new Date(updatedAt).getTime(),
+    };
   }
 
   async create(createUserDto: CreateUserDto) {
-    const user = {
-      id: uuid(),
+    const expandedUserDto = {
       ...createUserDto,
-      version: 1,
-      createdAt: new Date().getTime(),
-      updatedAt: new Date().getTime(),
     };
 
     try {
-      await this.databaseService.create<User>(DB_Field.USERS, user);
+      const user = await this.prismaService.user.create({
+        data: expandedUserDto,
+      });
+
       return this.sanitizeUser(user);
     } catch {
-      throw new HttpException(
-        'Failed to create user',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException('Failed to create user');
     }
   }
 
   async findAll() {
     try {
-      return await this.databaseService.getAll<User>(DB_Field.USERS);
-    } catch (error) {
-      throw new HttpException(
-        'Failed to get all users',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      return await this.prismaService.user.findMany();
+    } catch {
+      throw new InternalServerErrorException('Failed to get all users');
     }
   }
 
   async findOne(id: string) {
     try {
-      const user = await this.databaseService.getOne<User>(DB_Field.USERS, id);
+      const user = await this.prismaService.user.findUnique({
+        where: { id },
+      });
 
       if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        throw new NotFoundException('User not found');
       }
 
       return this.sanitizeUser(user);
     } catch (error) {
       if (error instanceof HttpException) throw error;
-
-      throw new HttpException(
-        'Failed to get user',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException('Failed to get user');
     }
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
     try {
-      const user = await this.databaseService.getOne<User>(DB_Field.USERS, id);
+      const user = await this.prismaService.user.findUnique({
+        where: { id },
+      });
 
       if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        throw new NotFoundException('User not found');
       }
 
       if (user.password !== updateUserDto.oldPassword) {
-        throw new HttpException(
-          'Old password is incorrect',
-          HttpStatus.FORBIDDEN,
-        );
+        throw new ForbiddenException('Old password is incorrect');
       }
 
-      const updatedUser = {
-        ...user,
-        password: updateUserDto.newPassword,
-        version: user.version + 1,
-        updatedAt: new Date().getTime(),
-      };
+      const updatedUser = await this.prismaService.user.update({
+        where: { id },
+        data: {
+          password: updateUserDto.newPassword,
+          version: user.version + 1,
+        },
+      });
 
-      await this.databaseService.update<User>(DB_Field.USERS, id, updatedUser);
       return this.sanitizeUser(updatedUser);
     } catch (error) {
       if (error instanceof HttpException) throw error;
-
-      throw new HttpException(
-        'Failed to update user',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException('Failed to update user');
     }
   }
 
   async remove(id: string) {
     try {
-      const user = await this.databaseService.getOne<User>(DB_Field.USERS, id);
+      const user = await this.prismaService.user.findUnique({
+        where: { id },
+      });
 
       if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        throw new NotFoundException('User not found');
       }
 
-      await this.databaseService.delete(DB_Field.USERS, id);
+      await this.prismaService.user.delete({
+        where: { id },
+      });
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      throw new HttpException(
-        'Failed to delete user',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException('Failed to delete user');
     }
   }
 }
