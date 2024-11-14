@@ -1,159 +1,116 @@
 import {
-  forwardRef,
   HttpException,
-  HttpStatus,
-  Inject,
   Injectable,
+  InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
-import { Album } from 'src/albums/interfaces/album.interface';
-import { DatabaseService } from 'src/database/database.service';
-import { FavoritesService } from 'src/favorites/favorites.service';
-import { TracksService } from 'src/tracks/tracks.service';
-import { v4 as uuid } from 'uuid';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album.dto';
-import { DB_Field } from 'src/types';
 
 @Injectable()
 export class AlbumsService {
-  constructor(
-    @Inject(forwardRef(() => TracksService))
-    private readonly tracksService: TracksService,
-    @Inject(forwardRef(() => FavoritesService))
-    private readonly favoritesService: FavoritesService,
-    private readonly databaseService: DatabaseService,
-  ) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   async create({ name, year, artistId }: CreateAlbumDto) {
     try {
       if (artistId) {
-        const artist = await this.databaseService.getOne(
-          DB_Field.ARTISTS,
-          artistId,
-        );
+        const artist = await this.prismaService.artist.findUnique({
+          where: { id: artistId },
+        });
 
         if (!artist) {
-          throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
+          throw new NotFoundException('Artist not found');
         }
       }
 
-      const album = {
-        id: uuid(),
-        name,
-        year,
-        artistId,
-      };
-
-      return await this.databaseService.create<Album>(DB_Field.ALBUMS, album);
+      return await this.prismaService.album.create({
+        data: {
+          name,
+          year,
+          artistId,
+        },
+      });
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      throw new HttpException(
-        'Failed to create album',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException('Failed to create album');
     }
   }
 
   async findAll() {
     try {
-      return await this.databaseService.getAll<Album>(DB_Field.ALBUMS);
+      // return await this.databaseService.getAll<Album>(DB_Field.ALBUMS);
+      return await this.prismaService.album.findMany();
     } catch {
-      throw new HttpException(
-        'Failed to get all artists',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException('Failed to get all artists');
     }
   }
 
   async findOne(id: string) {
     try {
-      const album = await this.databaseService.getOne<Album>(
-        DB_Field.ALBUMS,
-        id,
-      );
+      const album = await this.prismaService.album.findUnique({
+        where: { id },
+      });
 
       if (!album) {
-        throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+        throw new NotFoundException('Album not found');
       }
 
       return album;
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      throw new HttpException(
-        'Failed to get album',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException('Failed to get album');
     }
   }
 
   async update(id: string, { name, year, artistId }: UpdateAlbumDto) {
     try {
-      const album = await this.databaseService.getOne<Album>(
-        DB_Field.ALBUMS,
-        id,
-      );
+      const album = await this.prismaService.album.findUnique({
+        where: { id },
+      });
 
       if (!album) {
-        throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+        throw new NotFoundException('Album not found');
       }
 
       if (artistId) {
-        const artist = await this.databaseService.getOne(
-          DB_Field.ARTISTS,
-          artistId,
-        );
+        const artist = await this.prismaService.artist.findUnique({
+          where: { id: artistId },
+        });
 
         if (!artist) {
-          throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
+          throw new NotFoundException('Artist not found');
         }
       }
 
-      return await this.databaseService.update<Album>(DB_Field.ALBUMS, id, {
-        name,
-        year,
-        artistId,
+      return this.prismaService.album.update({
+        where: { id },
+        data: {
+          name,
+          year,
+          artistId,
+        },
       });
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      throw new HttpException(
-        'Failed to update album',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException('Failed to update album');
     }
   }
 
   async remove(id: string) {
     try {
-      const album = await this.databaseService.getOne<Album>(
-        DB_Field.ALBUMS,
-        id,
-      );
+      const album = await this.prismaService.album.findUnique({
+        where: { id },
+      });
 
       if (!album) {
-        throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
+        throw new NotFoundException('Album not found');
       }
 
-      await this.tracksService.removeAlbumFromTracks(id);
-      await this.favoritesService.removeAlbum(id);
-      await this.databaseService.delete(DB_Field.ALBUMS, id);
+      await this.prismaService.album.delete({ where: { id } });
     } catch (error) {
       if (error instanceof HttpException) throw error;
-      throw new HttpException(
-        'Failed to delete album',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async removeArtistFromAlbum(artistId: string) {
-    const albums = await this.databaseService.getAll<Album>(DB_Field.ALBUMS);
-
-    for (const album of albums) {
-      if (album.artistId === artistId) {
-        await this.databaseService.update<Album>(DB_Field.ALBUMS, album.id, {
-          artistId: null,
-        });
-      }
+      throw new InternalServerErrorException('Failed to delete album');
     }
   }
 }
