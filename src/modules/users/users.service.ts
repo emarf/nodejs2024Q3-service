@@ -5,8 +5,8 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { User } from 'src/users/interfaces/user.interface';
-import { PrismaService } from './../prisma/prisma.service';
+import { User } from 'src/modules/users/interfaces/user.interface';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 

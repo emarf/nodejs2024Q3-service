@@ -1,28 +1,40 @@
-services:
-  # nest-api:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: nest-api
-  #   restart: always
-  #   ports:
-  #     - '3000:3000'
-  #   depends_on:
-  #     - nest-postgres
-  #   env_file:
-  #     - .env
+networks:
+  app-network:
+    driver: bridge
 
-  emarf-postgres:
-    image: postgres:14
-    container_name: emarf-postgres
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nest-api
     restart: always
     ports:
-      - '5432:5432'
+      - '${PORT}:${PORT}'
+    depends_on:
+      - postgres
     env_file:
       - .env
     volumes:
-      - emarf-postgres:/var/lib/postgresql/data
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+      - ./package.json:/app/package.json
+      - ./package-lock.json:/app/package-lock.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tsconfig.json:/app/tsconfig.build.json
+      - ./doc/api.yaml:/app/doc/api.yaml
 
+  postgres:
+    build:
+      context: ./prisma
+      dockerfile: Dockerfile
+    container_name: emarf-postgres-db
+    restart: always
+    ports:
+      - '${PORT_DB}:${PORT_DB}'
+    env_file:
+      - .env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
 volumes:
-  emarf-postgres:
-    name: emarf-postgres-volume
+  postgres-data:
