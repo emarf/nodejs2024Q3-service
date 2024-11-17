@@ -1,12 +1,16 @@
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
-
-RUN npm install && npm cache clean --force
-
 COPY prisma ./prisma/
+
+RUN npm install
+
+FROM node:20-alpine AS final
+
+WORKDIR /app
+COPY --from=builder /app /app
 
 RUN npx prisma generate
 

@@ -5,9 +5,6 @@ networks:
 services:
   app:
     image: emarf/nodejs2024q3-service-app:latest
-    # build:
-    #   context: .
-    #   dockerfile: Dockerfile
     container_name: emarf-nest-api
     restart: always
     ports:
@@ -27,9 +24,6 @@ services:
 
   postgres:
     image: emarf/nodejs2024q3-service-postgres:latest
-    # build:
-    #   context: ./prisma
-    #   dockerfile: Dockerfile
     container_name: emarf-postgres-db
     restart: always
     ports:
@@ -38,5 +32,8 @@ services:
       - .env
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - postgres-logs:/var/log/postgresql
+
 volumes:
   postgres-data:
+  postgres-logs:
