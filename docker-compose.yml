@@ -4,10 +4,11 @@ networks:
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: nest-api
+    image: emarf/nodejs2024q3-service-app:latest
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    container_name: emarf-nest-api
     restart: always
     ports:
       - '${PORT}:${PORT}'
@@ -25,9 +26,10 @@ services:
       - ./doc/api.yaml:/app/doc/api.yaml
 
   postgres:
-    build:
-      context: ./prisma
-      dockerfile: Dockerfile
+    image: emarf/nodejs2024q3-service-postgres:latest
+    # build:
+    #   context: ./prisma
+    #   dockerfile: Dockerfile
     container_name: emarf-postgres-db
     restart: always
     ports:

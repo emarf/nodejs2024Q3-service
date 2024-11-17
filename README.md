@@ -24,12 +24,12 @@ Rename `.env.example` to `.env`
 ## Running application
 
 ```
-npm start
+npm run docker
 ```
 
 After starting the app on port (4000 as default) you can open
-in your browser OpenAPI documentation by typing http://localhost:4000/docs/.
-For more information about OpenAPI/Swagger please visit https://swagger.io/.
+in your browser OpenAPI documentation by typing <http://localhost:4000/docs/>.
+For more information about OpenAPI/Swagger please visit <https://swagger.io/>.
 
 ## Testing
 
@@ -73,4 +73,4 @@ npm run format
 
 Press <kbd>F5</kbd> to debug.
 
-For more information, visit: https://code.visualstudio.com/docs/editor/debugging
+For more information, visit: <https://code.visualstudio.com/docs/editor/debugging>

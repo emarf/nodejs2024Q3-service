@@ -1,6 +1,25 @@
+# Ignore IDE/editor config files
 .vscode/
+.idea/
+.DS_Store
+
+# Ignore dependencies
 node_modules/
 dist/
+
+# Ignore logs
 npm-debug.log
-Dockerfile
+yarn-debug.log
+yarn-error.log
+
+# Ignore environment files
 .env
+.env.*
+
+# Ignore Docker-related files
+Dockerfile
+docker-compose.yml
+
+# Ignore Git files
+.git
+.gitignore
