@@ -3,15 +3,14 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-COPY prisma ./prisma/
 
-RUN npm install
+RUN npm install && npm cache clean --force
+
+COPY . .
 
 FROM node:20-alpine AS final
 
 WORKDIR /app
 COPY --from=builder /app /app
 
-RUN npx prisma generate
-
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:dev"]
+CMD ["sh", "-c", "npm run start:dev:docker"]

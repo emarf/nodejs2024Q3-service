@@ -24,7 +24,7 @@ Rename `.env.example` to `.env`
 ## Running application
 
 ```
-npm run docker
+npm run docker:up
 ```
 
 After starting the app on port (4000 as default) you can open

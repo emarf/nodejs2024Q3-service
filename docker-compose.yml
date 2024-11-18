@@ -14,13 +14,10 @@ services:
     env_file:
       - .env
     volumes:
-      - ./src:/app/src
-      - ./prisma:/app/prisma
-      - ./package.json:/app/package.json
-      - ./package-lock.json:/app/package-lock.json
-      - ./tsconfig.json:/app/tsconfig.json
-      - ./tsconfig.json:/app/tsconfig.build.json
-      - ./doc/api.yaml:/app/doc/api.yaml
+      - ./:/app
+      - app-node-modules:/app/node_modules
+    networks:
+      - app-network
 
   postgres:
     image: emarf/nodejs2024q3-service-postgres:latest
@@ -33,7 +30,16 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - postgres-logs:/var/log/postgresql
+    networks:
+      - app-network
+    healthcheck:
+      test:
+        ['CMD', 'pg_isready', '-U', '${POSTGRES_USER}', '-d', '${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
+  app-node-modules:
   postgres-data:
   postgres-logs:
