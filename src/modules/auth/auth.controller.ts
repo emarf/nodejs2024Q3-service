@@ -3,14 +3,17 @@ import {
   Controller,
   HttpCode,
   Post,
+  Request,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { LoginDto } from 'src/modules/auth/dto/login.dto';
-import { SignUpDto } from 'src/modules/auth/dto/signup.dto';
-import { AuthService } from './auth.service';
+import { StatusCodes } from 'http-status-codes';
 import { Public } from 'src/decorators';
-import { RefreshDto } from 'src/modules/auth/dto/refresh.dto';
+import { SignUpDto } from 'src/modules/auth/dto/signup.dto';
+import { LocalAuthGuard } from 'src/modules/auth/guards/local-auth.guard';
+import { RefreshGuard } from 'src/modules/auth/guards/refresh-auth.guard';
+import { AuthService } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
@@ -24,18 +27,18 @@ export class AuthController {
   }
 
   @Public()
-  @UsePipes(new ValidationPipe())
+  @UseGuards(LocalAuthGuard)
   @Post('login')
-  @HttpCode(200)
-  login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  @HttpCode(StatusCodes.OK)
+  login(@Request() req) {
+    return this.authService.login(req.user);
   }
 
   @Public()
-  // @UsePipes(new ValidationPipe())
+  @UseGuards(RefreshGuard)
   @Post('refresh')
-  @HttpCode(200)
-  refresh(@Body() refreshDto: RefreshDto) {
-    return this.authService.refresh(refreshDto);
+  @HttpCode(StatusCodes.OK)
+  refresh(@Request() req) {
+    return this.authService.refresh(req.user);
   }
 }

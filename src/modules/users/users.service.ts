@@ -69,7 +69,7 @@ export class UsersService {
     }
   }
 
-  async findByLogin(login: string) {
+  async findOneWithLogin(login: string) {
     try {
       const user = await this.prismaService.user.findFirst({
         where: { login },
