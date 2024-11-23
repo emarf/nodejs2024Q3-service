@@ -5,24 +5,26 @@ import {
   Post,
   Request,
   UseGuards,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { StatusCodes } from 'http-status-codes';
 import { Public } from 'src/decorators';
 import { SignUpDto } from 'src/modules/auth/dto/signup.dto';
 import { LocalAuthGuard } from 'src/modules/auth/guards/local-auth.guard';
 import { RefreshGuard } from 'src/modules/auth/guards/refresh-auth.guard';
+import { LoggerService } from 'src/modules/logger/logger.service';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly loggerService: LoggerService,
+  ) {}
 
   @Public()
-  @UsePipes(new ValidationPipe())
   @Post('signup')
   signup(@Body() singUpDto: SignUpDto) {
+    this.loggerService.log('signup', 'AuthController');
     return this.authService.signup(singUpDto);
   }
 
@@ -31,6 +33,7 @@ export class AuthController {
   @Post('login')
   @HttpCode(StatusCodes.OK)
   login(@Request() req) {
+    this.loggerService.log('login', 'AuthController');
     return this.authService.login(req.user);
   }
 
@@ -39,6 +42,7 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(StatusCodes.OK)
   refresh(@Request() req) {
+    this.loggerService.log('refresh', 'AuthController');
     return this.authService.refresh(req.user);
   }
 }

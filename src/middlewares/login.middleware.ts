@@ -3,11 +3,11 @@ import {
   NestMiddleware,
   BadRequestException,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 @Injectable()
 export class LoginValidationMiddleware implements NestMiddleware {
-  use(req: Request, res: Response, next: () => void) {
+  use(req: Request, res: Response, next: NextFunction) {
     const { login, password } = req.body;
 
     if (!login || !password) {

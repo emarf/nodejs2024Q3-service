@@ -46,7 +46,8 @@ export class UsersService {
 
   async findAll() {
     try {
-      return await this.prismaService.user.findMany();
+      const users = await this.prismaService.user.findMany();
+      return users.map((user) => this.sanitizeUser(user));
     } catch {
       throw new InternalServerErrorException('Failed to get all users');
     }
