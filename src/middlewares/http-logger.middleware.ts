@@ -8,7 +8,7 @@ export class HttpLoggerMiddleware implements NestMiddleware {
   constructor(private readonly loggerService: LoggerService) {}
 
   use(req: Request, res: Response, next: NextFunction) {
-    const { method, originalUrl, body } = req;
+    const { method, originalUrl, body, query } = req;
     const sanitizedBody = sanitizeSensitiveData(body);
 
     const start = Date.now();
@@ -20,6 +20,7 @@ export class HttpLoggerMiddleware implements NestMiddleware {
       this.loggerService.log(
         `
         Request: ${method} ${originalUrl} ${statusCode}
+        Query: ${JSON.stringify(query)}
         Body: ${JSON.stringify(sanitizedBody)}
         Duration: ${duration}ms
         `,
