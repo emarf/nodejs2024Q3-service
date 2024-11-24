@@ -30,7 +30,7 @@
     "audit": "npm audit",
     "scan:app": "docker scout cves emarf/nodejs2024q3-service-app:latest",
     "scan:db": "docker scout cves emarf/nodejs2024q3-service-postgres:latest",
-    "docker:build": "docker build -t emarf/nodejs2024q3-service-app:latest . && docker build -t emarf/nodejs2024q3-service-postgres:latest .",
+    "docker:build": "docker build -t emarf/nodejs2024q3-service-app:latest . && docker build -t emarf/nodejs2024q3-service-postgres:latest ./prisma",
     "docker:push": "docker push emarf/nodejs2024q3-service-app:latest && docker push emarf/nodejs2024q3-service-postgres:latest"
   },
   "dependencies": {
