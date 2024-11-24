@@ -39,6 +39,33 @@ npm run scan:app
 npm run scan:db
 ```
 
+## Logging & Error Handling and Authentication & Authorization
+
+Running the Application:
+
+To start the application use the following command:
+
+```bash
+npm run docker:up
+```
+
+Running Tests
+
+```bash
+npm run test:auth
+npm run test:refresh
+```
+
+**Logs**
+
+You can customize the logging level and maximum log file size by modifying the .env file:
+
+- `LOG_LEVEL`: Controls the verbosity of logs (e.g., DEBUG, INFO, WARN, ERROR).
+- `LOG_MAX_FILE_SIZE`: Sets the maximum size (in KB) for log files before rotation.
+
+Application logs are saved in the logs directory.
+Logs are rotated based on the configured maximum file size. Older logs are archived with timestamped suffixes, ensuring a clean and organized logging system.
+
 ## Testing
 
 After application running open new terminal and enter:
