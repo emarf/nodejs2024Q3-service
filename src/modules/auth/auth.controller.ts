@@ -24,7 +24,7 @@ export class AuthController {
   @Public()
   @Post('signup')
   signup(@Body() singUpDto: SignUpDto) {
-    this.loggerService.log('signup', 'AuthController');
+    this.loggerService.log('signup', AuthController.name);
     return this.authService.signup(singUpDto);
   }
 
@@ -33,7 +33,7 @@ export class AuthController {
   @Post('login')
   @HttpCode(StatusCodes.OK)
   login(@Request() req) {
-    this.loggerService.log('login', 'AuthController');
+    this.loggerService.log('login', AuthController.name);
     return this.authService.login(req.user);
   }
 
@@ -42,7 +42,7 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(StatusCodes.OK)
   refresh(@Request() req) {
-    this.loggerService.log('refresh', 'AuthController');
+    this.loggerService.log('refresh', AuthController.name);
     return this.authService.refresh(req.user);
   }
 }

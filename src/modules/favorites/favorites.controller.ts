@@ -20,7 +20,7 @@ export class FavoritesController {
 
   @Get()
   findAll() {
-    this.loggerService.log('Getting all favorites', 'FavoritesController');
+    this.loggerService.log('Getting all favorites', FavoritesController.name);
     return this.favoritesService.findAll();
   }
 
@@ -28,7 +28,7 @@ export class FavoritesController {
   addTrack(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     this.loggerService.log(
       `Adding track ${id} to favorites`,
-      'FavoritesController',
+      FavoritesController.name,
     );
     return this.favoritesService.addTrack(id);
   }
@@ -37,7 +37,7 @@ export class FavoritesController {
   addAlbum(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     this.loggerService.log(
       `Adding album ${id} to favorites`,
-      'FavoritesController',
+      FavoritesController.name,
     );
     return this.favoritesService.addAlbum(id);
   }
@@ -46,7 +46,7 @@ export class FavoritesController {
   addArtist(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     this.loggerService.log(
       `Adding artist ${id} to favorites`,
-      'FavoritesController',
+      FavoritesController.name,
     );
     return this.favoritesService.addArtist(id);
   }
@@ -56,7 +56,7 @@ export class FavoritesController {
   removeTrack(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     this.loggerService.log(
       `Removing track ${id} from favorites`,
-      'FavoritesController',
+      FavoritesController.name,
     );
     return this.favoritesService.removeTrackFromFavorites(id);
   }
@@ -66,7 +66,7 @@ export class FavoritesController {
   removeAlbum(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     this.loggerService.log(
       `Removing album ${id} from favorites`,
-      'FavoritesController',
+      FavoritesController.name,
     );
     return this.favoritesService.removeAlbumFromFavorites(id);
   }
@@ -76,7 +76,7 @@ export class FavoritesController {
   removeArtist(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     this.loggerService.log(
       `Removing artist ${id} from favorites`,
-      'FavoritesController',
+      FavoritesController.name,
     );
     return this.favoritesService.removeArtistFromFavorites(id);
   }

@@ -26,20 +26,20 @@ export class UsersController {
   create(@Body() createUserDto: CreateUserDto) {
     this.loggerService.log(
       `Creating user ${createUserDto.login}`,
-      'UsersController',
+      UsersController.name,
     );
     return this.usersService.create(createUserDto);
   }
 
   @Get()
   findAll() {
-    this.loggerService.log('Getting all users', 'UsersController');
+    this.loggerService.log('Getting all users', UsersController.name);
     return this.usersService.findAll();
   }
 
   @Get(':id')
   findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
-    this.loggerService.log(`Getting user by id ${id}`, 'UsersController');
+    this.loggerService.log(`Getting user by id ${id}`, UsersController.name);
     return this.usersService.findOne(id);
   }
 
@@ -48,14 +48,14 @@ export class UsersController {
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    this.loggerService.log(`Updating user by id ${id}`, 'UsersController');
+    this.loggerService.log(`Updating user by id ${id}`, UsersController.name);
     return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
   @HttpCode(StatusCodes.NO_CONTENT)
   remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
-    this.loggerService.log(`Deleting user by id ${id}`, 'UsersController');
+    this.loggerService.log(`Deleting user by id ${id}`, UsersController.name);
     return this.usersService.remove(id);
   }
 }
