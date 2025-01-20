@@ -9,6 +9,7 @@ import { User } from 'src/modules/users/interfaces/user.interface';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { generatePasswordHash, validatePassword } from 'src/common/utils';
 
 @Injectable()
 export class UsersService {
@@ -25,8 +26,11 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto) {
+    const hashPassword = await generatePasswordHash(createUserDto.password);
+
     const expandedUserDto = {
       ...createUserDto,
+      password: hashPassword,
     };
 
     try {
@@ -42,7 +46,8 @@ export class UsersService {
 
   async findAll() {
     try {
-      return await this.prismaService.user.findMany();
+      const users = await this.prismaService.user.findMany();
+      return users.map((user) => this.sanitizeUser(user));
     } catch {
       throw new InternalServerErrorException('Failed to get all users');
     }
@@ -65,6 +70,19 @@ export class UsersService {
     }
   }
 
+  async findOneWithLogin(login: string) {
+    try {
+      const user = await this.prismaService.user.findFirst({
+        where: { login },
+      });
+
+      return user;
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException('Failed to get user');
+    }
+  }
+
   async update(id: string, updateUserDto: UpdateUserDto) {
     try {
       const user = await this.prismaService.user.findUnique({
@@ -75,14 +93,22 @@ export class UsersService {
         throw new NotFoundException('User not found');
       }
 
-      if (user.password !== updateUserDto.oldPassword) {
+      const isValidPassword = await validatePassword(
+        updateUserDto.oldPassword,
+        user.password,
+      );
+
+      if (!isValidPassword) {
         throw new ForbiddenException('Old password is incorrect');
       }
 
+      const hashPassword = await generatePasswordHash(
+        updateUserDto.newPassword,
+      );
       const updatedUser = await this.prismaService.user.update({
         where: { id },
         data: {
-          password: updateUserDto.newPassword,
+          password: hashPassword,
           version: user.version + 1,
         },
       });
