@@ -1,0 +1,45 @@
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  app:
+    image: emarf/nodejs2024q3-service-app:latest
+    container_name: emarf-nest-api
+    restart: always
+    ports:
+      - '${PORT}:${PORT}'
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+      - app-node-modules:/app/node_modules
+    networks:
+      - app-network
+
+  postgres:
+    image: emarf/nodejs2024q3-service-postgres:latest
+    container_name: emarf-postgres-db
+    restart: always
+    ports:
+      - '${PORT_DB}:${PORT_DB}'
+    env_file:
+      - .env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - postgres-logs:/var/log/postgresql
+    networks:
+      - app-network
+    healthcheck:
+      test:
+        ['CMD', 'pg_isready', '-U', '${POSTGRES_USER}', '-d', '${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  app-node-modules:
+  postgres-data:
+  postgres-logs:
